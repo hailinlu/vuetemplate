@@ -5,6 +5,7 @@
  */
 
 import axios from "axios";
+import { Message } from 'element-ui'
 
 // 判定开发模式
 if (process.env.NODE_ENV === "development") {
@@ -20,7 +21,6 @@ if (process.env.NODE_ENV === "development") {
 
 // 设置全局头信息
 axios.defaults.headers["Content-Type"] = "application/json;charset=UTF-8";
-
 // 全局设置超时时间
 axios.defaults.timeout = 240000;
 
@@ -60,9 +60,19 @@ export function get(url, params) {
         params: params
       })
       .then(res => {
+        if (res.data && !res.data.success) {
+          Message.error({
+            message: res.data.message,
+            duration: 1000
+          })
+        }
         resolve(res.data);
       })
       .catch(err => {
+        Message.error({
+          message: err,
+          duration: 1000
+        })
         reject(err);
       });
   });
@@ -73,9 +83,19 @@ export function post(url, params) {
     axios
       .post(url, JSON.stringify(params))
       .then(res => {
+        if (res.data && !res.data.success) {
+          Message.error({
+            message: res.data.message,
+            duration: 1000
+          })
+        }
         resolve(res.data);
       })
       .catch(err => {
+        Message.error({
+          message: err,
+          duration: 1000
+        })
         reject(err);
       });
   });
@@ -87,10 +107,20 @@ export function querypost(url, params) {
     axios
       .post(url, null, { params: params })
       .then(res => {
+        if (res.data && !res.data.success) {
+          Message.error({
+            message: res.data.message,
+            duration: 1000
+          })
+        }
         resolve(res.data);
       })
       .catch(err => {
-        reject(err.data);
+        Message.error({
+          message: err,
+          duration: 1000
+        })
+        reject(err);
       });
   });
 }
@@ -99,12 +129,9 @@ export function querypost(url, params) {
 export function down(url, params, fileName) {
   let file = fileName;
   return new Promise((resolve, reject) => {
-    axios
-      .get(url, { params: params }, { responseType: "blob" })
+    axios.post(url, null, { params: params, responseType: "blob" })
       .then(response => {
-        const blob = new Blob([response.data], {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8"
-        });
+        const blob = new Blob([response.data]);
         const aEle = document.createElement("a"); // 创建a标签
         const href = window.URL.createObjectURL(blob); // 创建下载的链接
         aEle.href = href;
@@ -116,13 +143,17 @@ export function down(url, params, fileName) {
         resolve("success");
       })
       .catch(err => {
+        Message.error({
+          message: err,
+          duration: 1000
+        })
         reject(err);
       });
   });
 }
 
 // 执行多个并发请求
-export function all() {
+export function all(...promises) {
   var userPromise = Array.prototype.slice.apply(arguments);
   return new Promise((resolve, reject) => {
     axios
@@ -133,7 +164,7 @@ export function all() {
         })
       )
       .catch(error => {
-        reject(error);
+        reject(arguments);
       });
   });
 }
